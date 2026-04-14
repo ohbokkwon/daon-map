@@ -137,7 +137,12 @@ function loadData() {
   document.getElementById('listWrap').style.display = 'none';
   document.getElementById('errorBox').classList.remove('show');
 
-  fetch(API_URL)
+  fetch(API_URL, {
+    method: 'GET',
+    redirect: 'follow',
+    mode: 'cors',
+    credentials: 'omit'
+  })
     .then(function(r){ return r.json(); })
     .then(function(res){
       document.getElementById('loading').style.display = 'none';
