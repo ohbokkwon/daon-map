@@ -17,12 +17,8 @@
     window.addEventListener('beforeunload',function(e){e.stopImmediatePropagation();},true);
     window.addEventListener('hashchange',function(e){e.stopImmediatePropagation();},true);
     window.addEventListener('popstate',function(e){e.stopImmediatePropagation();},true);
-    // setInterval 차단 - 부모 페이지에 영향 주는 주기적 실행 방지
-    var _setInterval = window.setInterval;
-    window.setInterval = function(fn, delay){
-      if(delay < 60000) return; // 1분 미만 interval 차단
-      return _setInterval(fn, delay);
-    };
+    var _setInterval=window.setInterval;
+    window.setInterval=function(fn,delay){ if(delay<60000) return; return _setInterval(fn,delay); };
   }
 })();
 </script>
@@ -119,9 +115,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #f0f6ff; }
     벌초·성묘 대행 서비스를 신청하시겠어요?<br>
     <strong>카카오톡으로 간편하게 상담</strong>받으실 수 있습니다!
   </div>
-  <a class="kakao-btn" href="https://pf.kakao.com/_xoxhUxbxj/chat" target="_blank" rel="noopener">
-    💬 &nbsp;카카오톡 상담하기
-  </a>
+  <a class="kakao-btn" href="https://pf.kakao.com/_xoxhUxbxj/chat" target="_blank" rel="noopener">💬 &nbsp;카카오톡 상담하기</a>
 </div>
 
 <script>
@@ -132,17 +126,10 @@ var isLoading = false;
 function loadData() {
   if(isLoading) return;
   isLoading = true;
-
   document.getElementById('loading').style.display = 'block';
   document.getElementById('listWrap').style.display = 'none';
   document.getElementById('errorBox').classList.remove('show');
-
-  fetch(API_URL, {
-    method: 'GET',
-    redirect: 'follow',
-    mode: 'cors',
-    credentials: 'omit'
-  })
+  fetch(API_URL, { method:'GET', redirect:'follow', mode:'cors', credentials:'omit' })
   .then(function(r){ return r.json(); })
   .then(function(res){
     isLoading = false;
@@ -172,21 +159,16 @@ function loadData() {
 
 function buildRegionFilter(data) {
   var regions = {};
-  data.forEach(function(d){ if(d.region) regions[d.region] = true; });
+  data.forEach(function(d){ if(d.region) regions[d.region]=true; });
   var sel = document.getElementById('filterRegion');
   sel.innerHTML = '<option value="">📌 전체 지역</option>';
-  Object.keys(regions).sort().forEach(function(r){
-    var o = document.createElement('option'); o.value=r; o.textContent=r; sel.appendChild(o);
-  });
+  Object.keys(regions).sort().forEach(function(r){ var o=document.createElement('option'); o.value=r; o.textContent=r; sel.appendChild(o); });
 }
 
 function applyFilter() {
   var region = document.getElementById('filterRegion').value;
   var type = document.getElementById('filterType').value;
-  var filtered = allData.filter(function(d){
-    return (!region||(d.region&&d.region.indexOf(region)>=0))&&(!type||d.type===type);
-  });
-  renderCards(filtered);
+  renderCards(allData.filter(function(d){ return (!region||(d.region&&d.region.indexOf(region)>=0))&&(!type||d.type===type); }));
 }
 
 function renderCards(data) {
@@ -197,17 +179,13 @@ function renderCards(data) {
   document.getElementById('listTitle').textContent = '작업 목록 ('+data.length+'건)';
   if(!data.length){ empty.classList.add('show'); return; }
   empty.classList.remove('show');
-  var sorted = data.slice().sort(function(a,b){ return String(b.date).localeCompare(String(a.date)); });
-  sorted.forEach(function(d){
+  data.slice().sort(function(a,b){ return String(b.date).localeCompare(String(a.date)); }).forEach(function(d){
     var dateStr = d.date ? String(d.date).substring(0,10) : '';
     var isDone = d.photos && d.photos > 0;
     var card = document.createElement('div');
     card.className = 'work-card';
     card.innerHTML =
-      '<div class="card-header">'+
-        '<span class="card-id">'+(d.id||'')+'</span>'+
-        '<span class="card-badge '+(isDone?'badge-done':'badge-ing')+'">'+(isDone?'✅ 완료':'🔧 진행중')+'</span>'+
-      '</div>'+
+      '<div class="card-header"><span class="card-id">'+(d.id||'')+'</span><span class="card-badge '+(isDone?'badge-done':'badge-ing')+'">'+(isDone?'✅ 완료':'🔧 진행중')+'</span></div>'+
       '<div class="card-region">📍 '+(d.region||'지역 미입력')+'</div>'+
       '<div class="card-detail">'+(d.detail||'')+'</div>'+
       '<div class="card-info">'+
@@ -230,8 +208,27 @@ function updateStats(data) {
   document.getElementById('photoCount').textContent = photos;
 }
 
-// window.onload 대신 DOMContentLoaded 사용
 document.addEventListener('DOMContentLoaded', function(){ loadData(); });
+
+// 핵심: 부모 페이지 메뉴 클릭 감지 → 강제 새로고침
+(function(){
+  if(window.self !== window.top){
+    try {
+      var parentDoc = window.parent.document;
+      parentDoc.addEventListener('click', function(e){
+        var target = e.target.closest('a, button');
+        if(target){
+          var href = target.getAttribute('href');
+          if(href && href !== '#' && !href.startsWith('http')){
+            setTimeout(function(){
+              window.parent.location.reload();
+            }, 50);
+          }
+        }
+      }, true);
+    } catch(e){}
+  }
+})();
 </script>
 </body>
 </html>
