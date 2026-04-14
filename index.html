@@ -4,42 +4,303 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>내 묘지 위치 찾기 - 다온벌초대행</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Noto Sans KR', sans-serif; background: #fff; }
-.wrap { width: 100%; }
-.guide-box { background: #fffbe6; border-left: 3px solid #c8a951; padding: 10px 14px; font-size: 12px; color: #666; line-height: 1.7; }
-.search-area { background: #222; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.search-area select { padding: 9px 10px; border: none; border-radius: 4px; font-size: 13px; background: #fff; cursor: pointer; flex: 1; min-width: 110px; }
-.search-area input[type="text"] { padding: 9px 10px; border: none; border-radius: 4px; font-size: 13px; flex: 2; min-width: 140px; }
-.btn-search { padding: 9px 16px; background: #c8a951; color: #fff; border: none; border-radius: 4px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
-.btn-search:hover { background: #b8963f; }
-.btn-gps { padding: 9px 14px; background: #3a7bd5; color: #fff; border: none; border-radius: 4px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-.btn-gps:hover { background: #2c6abc; }
-.gps-info { font-size: 12px; color: #3a7bd5; padding: 6px 16px; background: #eef4ff; display: none; }
+body { font-family: 'Noto Sans KR', sans-serif; background: #f0f6ff; }
+
+/* 헤더 */
+.header {
+  background: linear-gradient(135deg, #1a6fd4 0%, #2e8bff 100%);
+  padding: 28px 24px 24px;
+  text-align: center;
+}
+.header-icon { font-size: 42px; margin-bottom: 8px; }
+.header-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.5px;
+  line-height: 1.3;
+}
+.header-title span { color: #ffe066; }
+.header-sub {
+  font-size: 15px;
+  color: rgba(255,255,255,0.85);
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* 안내 배너 */
+.guide-box {
+  background: #fff;
+  border-left: 6px solid #2e8bff;
+  padding: 16px 20px;
+  font-size: 15px;
+  color: #444;
+  line-height: 1.9;
+  margin: 0;
+}
+.guide-box strong { color: #1a6fd4; font-weight: 700; }
+
+/* 검색 영역 */
+.search-wrap {
+  background: #e3f0ff;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-bottom: 2px solid #b8d8ff;
+}
+.search-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.search-wrap select,
+.search-wrap input[type="text"] {
+  padding: 14px 16px;
+  border: 2px solid #b8d8ff;
+  border-radius: 10px;
+  font-size: 16px;
+  background: #fff;
+  color: #222;
+  cursor: pointer;
+  outline: none;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 500;
+  transition: border-color 0.2s;
+  flex: 1;
+  min-width: 140px;
+}
+.search-wrap select:focus,
+.search-wrap input[type="text"]:focus { border-color: #2e8bff; }
+.search-wrap input::placeholder { color: #aaa; font-size: 15px; }
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+}
+.btn-search {
+  flex: 1;
+  padding: 16px 10px;
+  background: linear-gradient(135deg, #1a6fd4, #2e8bff);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: -0.3px;
+  transition: opacity 0.2s, transform 0.1s;
+  box-shadow: 0 4px 12px rgba(46,139,255,0.35);
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.btn-search:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-search:active { transform: translateY(0); }
+
+.btn-gps {
+  flex: 1;
+  padding: 16px 10px;
+  background: linear-gradient(135deg, #00b09b, #16c784);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  box-shadow: 0 4px 12px rgba(22,199,132,0.35);
+  font-family: 'Noto Sans KR', sans-serif;
+  letter-spacing: -0.3px;
+}
+.btn-gps:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* GPS 안내 */
+.gps-info {
+  display: none;
+  background: #e8fff5;
+  border-left: 5px solid #16c784;
+  padding: 12px 18px;
+  font-size: 14px;
+  color: #0a8a5a;
+  font-weight: 600;
+}
 .gps-info.show { display: block; }
-#map { width: 100%; height: 460px; }
-.loading { display: none; text-align: center; padding: 16px; font-size: 13px; color: #888; }
-.loading.show { display: block; }
-.result-area { padding: 12px 16px; background: #fafafa; border-top: 1px solid #eee; max-height: 200px; overflow-y: auto; }
-.result-title { font-size: 13px; font-weight: 700; color: #555; margin-bottom: 8px; }
-.result-list { list-style: none; }
-.result-item { padding: 9px 12px; background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 6px; cursor: pointer; }
-.result-item:hover { background: #f0f5ff; border-color: #3a7bd5; }
-.place-name { font-size: 13px; font-weight: 700; color: #222; }
-.place-addr { font-size: 12px; color: #888; margin-top: 2px; }
-.no-result { display: none; text-align: center; padding: 16px; font-size: 13px; color: #aaa; }
+
+/* 지도 */
+#map {
+  width: 100%;
+  height: 460px;
+  display: block;
+}
+
+/* 로딩 */
+.loading {
+  display: none;
+  text-align: center;
+  padding: 24px;
+  font-size: 16px;
+  color: #1a6fd4;
+  background: #f0f6ff;
+  font-weight: 600;
+}
+.loading.show { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.loading-spinner {
+  width: 22px; height: 22px;
+  border: 3px solid #c5dcff;
+  border-top-color: #2e8bff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 결과 없음 */
+.no-result {
+  display: none;
+  text-align: center;
+  padding: 24px;
+  font-size: 16px;
+  color: #888;
+  background: #f0f6ff;
+}
 .no-result.show { display: block; }
-@media (max-width: 600px) { #map { height: 360px; } }
+
+/* 결과 목록 */
+.result-area {
+  background: #f0f6ff;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.result-area::-webkit-scrollbar { width: 5px; }
+.result-area::-webkit-scrollbar-thumb { background: #b8d8ff; border-radius: 3px; }
+
+.result-header {
+  padding: 14px 18px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #daeaff;
+  border-bottom: 2px solid #b8d8ff;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.result-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a4fa0;
+}
+.result-badge {
+  background: #1a6fd4;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.result-list { list-style: none; padding: 10px 14px 14px; }
+.result-item {
+  padding: 14px 16px;
+  background: #fff;
+  border: 2px solid #d0e8ff;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.result-item:hover {
+  background: #e8f4ff;
+  border-color: #2e8bff;
+  transform: translateX(3px);
+  box-shadow: 0 2px 10px rgba(46,139,255,0.15);
+}
+.result-num {
+  width: 32px; height: 32px;
+  background: #1a6fd4;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.result-info { flex: 1; }
+.place-name { font-size: 16px; font-weight: 700; color: #1a1a1a; line-height: 1.4; }
+.place-addr { font-size: 14px; color: #6688aa; margin-top: 4px; line-height: 1.5; }
+
+/* 카카오 상담 배너 */
+.kakao-banner {
+  background: linear-gradient(135deg, #1a6fd4, #2e8bff);
+  padding: 20px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.kakao-banner-text {
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.7;
+  font-weight: 500;
+}
+.kakao-banner-text strong { color: #ffe066; font-size: 16px; }
+.kakao-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FEE500;
+  color: #3C1E1E;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 12px 22px;
+  border-radius: 10px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+}
+.kakao-btn:hover { opacity: 0.88; }
+
+@media (max-width: 600px) {
+  #map { height: 380px; }
+  .header-title { font-size: 22px; }
+  .btn-search, .btn-gps { font-size: 16px; padding: 14px 10px; }
+  .kakao-banner { flex-direction: column; text-align: center; }
+  .kakao-btn { width: 100%; justify-content: center; }
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="guide-box">📍 묘지가 위치한 <strong>시/도 → 시군구</strong>를 선택하거나 <strong>주소/묘지명</strong>을 입력 후 검색, 또는 <strong>📡 내 위치</strong> 버튼으로 현재 위치 주변을 확인하세요.</div>
 
-  <div class="search-area">
+<!-- 헤더 -->
+<div class="header">
+  <div class="header-icon">🗺️</div>
+  <div class="header-title">내 <span>묘지 위치</span> 찾기</div>
+  <div class="header-sub">다온벌초대행 · 전국 묘지 위치 검색</div>
+</div>
+
+<!-- 안내 -->
+<div class="guide-box">
+  📍 <strong>시/도 → 시군구</strong>를 선택하거나<br>
+  묘지 이름 또는 주소를 입력 후 <strong>검색</strong>하세요.<br>
+  <strong>📡 내 위치 찾기</strong> 버튼으로 현재 주변 묘지도 확인할 수 있습니다.
+</div>
+
+<!-- 검색 -->
+<div class="search-wrap">
+  <div class="search-row">
     <select id="sido" onchange="loadSigungu()">
-      <option value="">시/도 선택</option>
+      <option value="">📌 시 / 도 선택</option>
       <option>서울특별시</option><option>부산광역시</option><option>대구광역시</option>
       <option>인천광역시</option><option>광주광역시</option><option>대전광역시</option>
       <option>울산광역시</option><option>세종특별자치시</option><option>경기도</option>
@@ -47,21 +308,41 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #fff; }
       <option>전북특별자치도</option><option>전라남도</option><option>경상북도</option>
       <option>경상남도</option><option>제주특별자치도</option>
     </select>
-    <select id="sigungu"><option value="">시군구 선택</option></select>
-    <input type="text" id="keyword" placeholder="묘지명 또는 상세주소 (선택)">
-    <button class="btn-search" onclick="searchPlace()">🔍 검색</button>
-    <button class="btn-gps" onclick="getMyLocation()">📡 내 위치</button>
+    <select id="sigungu"><option value="">🏙️ 시 / 군 / 구 선택</option></select>
   </div>
-
-  <div class="gps-info" id="gpsInfo"></div>
-  <div id="map"></div>
-  <div class="loading" id="loading">🔍 검색 중...</div>
-  <div class="no-result" id="noResult">검색 결과가 없습니다. 다른 키워드로 시도해보세요.</div>
-
-  <div class="result-area" id="resultArea" style="display:none;">
-    <div class="result-title" id="resultTitle"></div>
-    <ul class="result-list" id="resultList"></ul>
+  <input type="text" id="keyword" placeholder="묘지 이름 또는 상세 주소를 입력하세요 (선택)">
+  <div class="btn-row">
+    <button class="btn-search" onclick="searchPlace()">🔍 &nbsp;묘지 검색하기</button>
+    <button class="btn-gps" onclick="getMyLocation()">📡 &nbsp;내 위치 찾기</button>
   </div>
+</div>
+
+<div class="gps-info" id="gpsInfo"></div>
+<div id="map"></div>
+
+<div class="loading" id="loading">
+  <div class="loading-spinner"></div>
+  <span>검색 중입니다. 잠시만 기다려 주세요...</span>
+</div>
+<div class="no-result" id="noResult">😔 검색 결과가 없습니다. 다른 키워드로 다시 시도해보세요.</div>
+
+<div class="result-area" id="resultArea" style="display:none;">
+  <div class="result-header">
+    <div class="result-title">🔎 검색 결과</div>
+    <div class="result-badge" id="resultBadge"></div>
+  </div>
+  <ul class="result-list" id="resultList"></ul>
+</div>
+
+<!-- 카카오 상담 배너 -->
+<div class="kakao-banner">
+  <div class="kakao-banner-text">
+    묘지 위치를 찾으셨나요?<br>
+    <strong>벌초 · 성묘 대행 서비스</strong>를 카카오톡으로 간편하게 신청하세요!
+  </div>
+  <a class="kakao-btn" href="https://pf.kakao.com/_xoxhUxbxj/chat" target="_blank">
+    💬 &nbsp;카카오톡 상담하기
+  </a>
 </div>
 
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=3529645d623ed6d1250d670688d02130&libraries=services"></script>
@@ -89,17 +370,18 @@ var sigunguData = {
 var map, ps, markers=[], infowindows=[], myMarker=null;
 
 kakao.maps.load(function(){
-  var el = document.getElementById('map');
-  map = new kakao.maps.Map(el, { center: new kakao.maps.LatLng(36.5,127.5), level: 13 });
+  map = new kakao.maps.Map(document.getElementById('map'), {
+    center: new kakao.maps.LatLng(36.5,127.5), level: 13
+  });
   ps = new kakao.maps.services.Places();
   map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
   map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
 });
 
 function loadSigungu(){
-  var sido = document.getElementById('sido').value;
-  var sg = document.getElementById('sigungu');
-  sg.innerHTML = '<option value="">시군구 선택</option>';
+  var sido=document.getElementById('sido').value;
+  var sg=document.getElementById('sigungu');
+  sg.innerHTML='<option value="">🏙️ 시 / 군 / 구 선택</option>';
   (sigunguData[sido]||[]).forEach(function(v){
     var o=document.createElement('option'); o.value=v; o.textContent=v; sg.appendChild(o);
   });
@@ -116,10 +398,9 @@ function searchPlace(){
     showLoading(false);
     if(status===kakao.maps.services.Status.OK){ displayResults(data); }
     else {
-      var q2=(sido?sido+' ':'')+(sigungu?sigungu+' ':''+'공원묘지');
-      ps.keywordSearch(q2, function(d2,s2){
+      ps.keywordSearch((sido?sido+' ':'')+(sigungu?sigungu+' ':'')+'공원묘지', function(d2,s2){
         if(s2===kakao.maps.services.Status.OK){ displayResults(d2); }
-        else { document.getElementById('noResult').classList.add('show'); }
+        else{ document.getElementById('noResult').classList.add('show'); }
       });
     }
   },{size:15});
@@ -135,7 +416,7 @@ function displayResults(data){
     var marker=new kakao.maps.Marker({map:map,position:pos});
     markers.push(marker);
     var iw=new kakao.maps.InfoWindow({
-      content:'<div style="padding:6px 10px;font-size:13px;font-weight:700;white-space:nowrap;">'+place.place_name+'</div>',
+      content:'<div style="padding:10px 14px;font-size:15px;font-weight:700;color:#1a4fa0;white-space:nowrap;border-bottom:3px solid #2e8bff;">'+place.place_name+'</div>',
       removable:true
     });
     infowindows.push(iw);
@@ -144,8 +425,11 @@ function displayResults(data){
     })(marker,iw));
     var li=document.createElement('li');
     li.className='result-item';
-    li.innerHTML='<div class="place-name">'+(i+1)+'. '+place.place_name+'</div>'+
-      '<div class="place-addr">'+(place.road_address_name||place.address_name)+'</div>';
+    li.innerHTML='<div class="result-num">'+(i+1)+'</div>'+
+      '<div class="result-info">'+
+        '<div class="place-name">'+place.place_name+'</div>'+
+        '<div class="place-addr">📍 '+(place.road_address_name||place.address_name)+'</div>'+
+      '</div>';
     li.onclick=(function(p,m,w){
       return function(){ map.setCenter(p); map.setLevel(4); infowindows.forEach(function(x){x.close();}); w.open(map,m); };
     })(pos,marker,iw);
@@ -153,7 +437,7 @@ function displayResults(data){
   });
   map.setBounds(bounds);
   document.getElementById('resultArea').style.display='block';
-  document.getElementById('resultTitle').textContent='검색결과 '+data.length+'건';
+  document.getElementById('resultBadge').textContent=data.length+'건';
 }
 
 function getMyLocation(){
@@ -166,11 +450,11 @@ function getMyLocation(){
     if(myMarker) myMarker.setMap(null);
     myMarker=new kakao.maps.Marker({
       map:map, position:position,
-      image:new kakao.maps.MarkerImage('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',new kakao.maps.Size(24,35))
+      image:new kakao.maps.MarkerImage('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',new kakao.maps.Size(28,40))
     });
     map.setCenter(position); map.setLevel(7);
     var gi=document.getElementById('gpsInfo');
-    gi.textContent='📡 현재 위치 기준 표시 중 (위도: '+lat.toFixed(4)+', 경도: '+lng.toFixed(4)+')';
+    gi.textContent='📡 현재 위치를 기준으로 주변 묘지를 검색합니다.';
     gi.classList.add('show');
     clearMarkers();
     ps.keywordSearch('묘지 공원묘지 납골당', function(data,status){
@@ -179,7 +463,7 @@ function getMyLocation(){
     },{location:position,radius:20000,size:15});
   }, function(){
     showLoading(false);
-    alert('위치 권한을 허용해주세요.');
+    alert('위치 권한을 허용해주세요. 브라우저 설정에서 위치 정보 접근을 허용해 주시기 바랍니다.');
   });
 }
 
