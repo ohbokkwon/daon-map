@@ -5,250 +5,76 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>실시간 작업현황 - 다온벌초대행</title>
 <script>
-if(window.self!==window.top){
-  var _orig_push=history.pushState,_orig_replace=history.replaceState;
-  history.pushState=function(){};
-  history.replaceState=function(){};
-  window.addEventListener('beforeunload',function(e){e.stopPropagation();});
-}
+// 부모 페이지 히스토리 완전 보호 - 가장 먼저 실행
+(function(){
+  if(window.self !== window.top){
+    try {
+      Object.defineProperty(window.history, 'pushState', {
+        value: function(){}, writable: false, configurable: false
+      });
+      Object.defineProperty(window.history, 'replaceState', {
+        value: function(){}, writable: false, configurable: false
+      });
+    } catch(e) {
+      window.history.pushState = function(){};
+      window.history.replaceState = function(){};
+    }
+    document.addEventListener('click', function(e){
+      var a = e.target.closest('a');
+      if(a && a.href && !a.target){ a.target = '_blank'; }
+    }, true);
+    window.addEventListener('beforeunload', function(e){ e.stopImmediatePropagation(); }, true);
+    window.addEventListener('hashchange', function(e){ e.stopImmediatePropagation(); }, true);
+    window.addEventListener('popstate', function(e){ e.stopImmediatePropagation(); }, true);
+  }
+})();
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Noto Sans KR', sans-serif; background: #f0f6ff; }
-
-/* 헤더 */
-.header {
-  background: linear-gradient(135deg, #1a6fd4 0%, #2e8bff 100%);
-  padding: 28px 24px 24px;
-  text-align: center;
-}
+.header { background: linear-gradient(135deg, #1a6fd4 0%, #2e8bff 100%); padding: 28px 24px 24px; text-align: center; }
 .header-icon { font-size: 40px; margin-bottom: 8px; }
 .header-title { font-size: 24px; font-weight: 900; color: #fff; }
 .header-title span { color: #ffe066; }
 .header-sub { font-size: 14px; color: rgba(255,255,255,0.85); margin-top: 6px; }
-
-/* 통계 카드 */
-.stats-wrap {
-  display: flex;
-  gap: 10px;
-  padding: 16px;
-  background: #daeaff;
-  flex-wrap: wrap;
-}
-.stat-card {
-  flex: 1;
-  min-width: 100px;
-  background: #fff;
-  border-radius: 12px;
-  padding: 14px 10px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(46,139,255,0.1);
-  border-top: 4px solid #2e8bff;
-}
+.stats-wrap { display: flex; gap: 10px; padding: 16px; background: #daeaff; flex-wrap: wrap; }
+.stat-card { flex: 1; min-width: 100px; background: #fff; border-radius: 12px; padding: 14px 10px; text-align: center; box-shadow: 0 2px 8px rgba(46,139,255,0.1); border-top: 4px solid #2e8bff; }
 .stat-num { font-size: 28px; font-weight: 900; color: #1a6fd4; }
 .stat-label { font-size: 12px; color: #888; margin-top: 4px; font-weight: 500; }
-
-/* 필터 */
-.filter-wrap {
-  background: #e3f0ff;
-  padding: 14px 16px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-  border-bottom: 2px solid #b8d8ff;
-}
-.filter-wrap select {
-  padding: 10px 14px;
-  border: 2px solid #b8d8ff;
-  border-radius: 8px;
-  font-size: 15px;
-  background: #fff;
-  color: #222;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-weight: 500;
-  flex: 1;
-  min-width: 130px;
-  outline: none;
-}
+.filter-wrap { background: #e3f0ff; padding: 14px 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border-bottom: 2px solid #b8d8ff; }
+.filter-wrap select { padding: 10px 14px; border: 2px solid #b8d8ff; border-radius: 8px; font-size: 15px; background: #fff; color: #222; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; flex: 1; min-width: 130px; outline: none; }
 .filter-wrap select:focus { border-color: #2e8bff; }
-.btn-refresh {
-  padding: 10px 18px;
-  background: linear-gradient(135deg, #1a6fd4, #2e8bff);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
-  white-space: nowrap;
-}
+.btn-refresh { padding: 10px 18px; background: linear-gradient(135deg, #1a6fd4, #2e8bff); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; }
 .btn-refresh:hover { opacity: 0.9; }
-
-/* 로딩 */
-.loading {
-  text-align: center;
-  padding: 50px 20px;
-  color: #1a6fd4;
-  font-size: 16px;
-  font-weight: 600;
-}
-.loading-spinner {
-  width: 40px; height: 40px;
-  border: 4px solid #c5dcff;
-  border-top-color: #2e8bff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 14px;
-}
+.loading { text-align: center; padding: 50px 20px; color: #1a6fd4; font-size: 16px; font-weight: 600; }
+.loading-spinner { width: 40px; height: 40px; border: 4px solid #c5dcff; border-top-color: #2e8bff; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-
-/* 오류 */
-.error-box {
-  background: #fff0f0;
-  border-left: 5px solid #e74c3c;
-  padding: 16px 20px;
-  margin: 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #c0392b;
-  display: none;
-}
+.error-box { background: #fff0f0; border-left: 5px solid #e74c3c; padding: 16px 20px; margin: 16px; border-radius: 8px; font-size: 14px; color: #c0392b; display: none; }
 .error-box.show { display: block; }
-
-/* 작업 카드 목록 */
 .list-wrap { padding: 14px 14px 20px; }
-.list-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1a4fa0;
-  margin-bottom: 12px;
-  padding: 10px 14px;
-  background: #daeaff;
-  border-radius: 8px;
-  border-left: 5px solid #2e8bff;
-}
-
-.work-card {
-  background: #fff;
-  border: 2px solid #d0e8ff;
-  border-radius: 14px;
-  padding: 18px 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(46,139,255,0.08);
-  transition: transform 0.15s;
-}
+.list-title { font-size: 16px; font-weight: 700; color: #1a4fa0; margin-bottom: 12px; padding: 10px 14px; background: #daeaff; border-radius: 8px; border-left: 5px solid #2e8bff; }
+.work-card { background: #fff; border: 2px solid #d0e8ff; border-radius: 14px; padding: 18px 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(46,139,255,0.08); transition: transform 0.15s; }
 .work-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(46,139,255,0.15); }
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.card-id {
-  font-size: 12px;
-  color: #888;
-  font-weight: 500;
-}
-.card-badge {
-  padding: 5px 14px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 700;
-}
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+.card-id { font-size: 12px; color: #888; font-weight: 500; }
+.card-badge { padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; }
 .badge-done { background: #e8fff5; color: #16a34a; border: 2px solid #16c784; }
 .badge-ing { background: #fff7e6; color: #d97706; border: 2px solid #f59e0b; }
-
-.card-region {
-  font-size: 19px;
-  font-weight: 900;
-  color: #1a1a1a;
-  margin-bottom: 8px;
-  line-height: 1.3;
-}
-.card-detail {
-  font-size: 14px;
-  color: #5588aa;
-  margin-bottom: 12px;
-}
-
-.card-info {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.info-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #f0f6ff;
-  border: 1px solid #c5dcff;
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 13px;
-  color: #1a4fa0;
-  font-weight: 600;
-}
-.card-date {
-  font-size: 13px;
-  color: #aaa;
-  margin-top: 10px;
-  text-align: right;
-}
-
-/* 빈 결과 */
-.empty-box {
-  text-align: center;
-  padding: 50px 20px;
-  color: #aaa;
-  font-size: 16px;
-  display: none;
-}
+.card-region { font-size: 19px; font-weight: 900; color: #1a1a1a; margin-bottom: 8px; line-height: 1.3; }
+.card-detail { font-size: 14px; color: #5588aa; margin-bottom: 12px; }
+.card-info { display: flex; flex-wrap: wrap; gap: 8px; }
+.info-chip { display: inline-flex; align-items: center; gap: 5px; background: #f0f6ff; border: 1px solid #c5dcff; border-radius: 8px; padding: 6px 12px; font-size: 13px; color: #1a4fa0; font-weight: 600; }
+.card-date { font-size: 13px; color: #aaa; margin-top: 10px; text-align: right; }
+.empty-box { text-align: center; padding: 50px 20px; color: #aaa; font-size: 16px; display: none; }
 .empty-box.show { display: block; }
 .empty-icon { font-size: 48px; margin-bottom: 12px; }
-
-/* 카카오 배너 */
-.kakao-banner {
-  background: linear-gradient(135deg, #1a6fd4, #2e8bff);
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 14px;
-}
+.kakao-banner { background: linear-gradient(135deg, #1a6fd4, #2e8bff); padding: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
 .kakao-banner-text { color: #fff; font-size: 15px; line-height: 1.7; }
 .kakao-banner-text strong { color: #ffe066; font-size: 16px; }
-.kakao-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #FEE500;
-  color: #3C1E1E;
-  font-size: 16px;
-  font-weight: 700;
-  padding: 12px 22px;
-  border-radius: 10px;
-  text-decoration: none;
-  white-space: nowrap;
-  font-family: 'Noto Sans KR', sans-serif;
-}
+.kakao-btn { display: inline-flex; align-items: center; gap: 8px; background: #FEE500; color: #3C1E1E; font-size: 16px; font-weight: 700; padding: 12px 22px; border-radius: 10px; text-decoration: none; white-space: nowrap; font-family: 'Noto Sans KR', sans-serif; }
 .kakao-btn:hover { opacity: 0.88; }
-
-/* 업데이트 시간 */
-.update-time {
-  text-align: center;
-  font-size: 12px;
-  color: #aaa;
-  padding: 8px;
-  background: #f8fbff;
-}
-
+.update-time { text-align: center; font-size: 12px; color: #aaa; padding: 8px; background: #f8fbff; }
 @media (max-width: 600px) {
   .stat-num { font-size: 22px; }
   .card-region { font-size: 17px; }
@@ -259,80 +85,45 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #f0f6ff; }
 </head>
 <body>
 
-<!-- 헤더 -->
 <div class="header">
   <div class="header-icon">📋</div>
   <div class="header-title">실시간 <span>작업현황</span></div>
   <div class="header-sub">다온벌초대행 · 전국 현장 작업 현황을 실시간으로 확인하세요</div>
 </div>
 
-<!-- 통계 카드 -->
 <div class="stats-wrap">
-  <div class="stat-card">
-    <div class="stat-num" id="totalCount">-</div>
-    <div class="stat-label">전체 작업</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-num" id="doneCount">-</div>
-    <div class="stat-label">완료</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-num" id="ingCount">-</div>
-    <div class="stat-label">진행중</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-num" id="photoCount">-</div>
-    <div class="stat-label">사진 등록</div>
-  </div>
+  <div class="stat-card"><div class="stat-num" id="totalCount">-</div><div class="stat-label">전체 작업</div></div>
+  <div class="stat-card"><div class="stat-num" id="doneCount">-</div><div class="stat-label">완료</div></div>
+  <div class="stat-card"><div class="stat-num" id="ingCount">-</div><div class="stat-label">진행중</div></div>
+  <div class="stat-card"><div class="stat-num" id="photoCount">-</div><div class="stat-label">사진 등록</div></div>
 </div>
 
-<!-- 필터 -->
 <div class="filter-wrap">
-  <select id="filterRegion" onchange="applyFilter()">
-    <option value="">📌 전체 지역</option>
-  </select>
+  <select id="filterRegion" onchange="applyFilter()"><option value="">📌 전체 지역</option></select>
   <select id="filterType" onchange="applyFilter()">
     <option value="">🏔️ 전체 묘지유형</option>
-    <option>야산</option>
-    <option>공원묘지</option>
-    <option>납골당 주변</option>
-    <option>선산</option>
-    <option>기타</option>
+    <option>야산</option><option>공원묘지</option><option>납골당 주변</option><option>선산</option><option>기타</option>
   </select>
   <button class="btn-refresh" onclick="loadData()">🔄 새로고침</button>
 </div>
 
-<!-- 오류 -->
-<div class="error-box" id="errorBox">
-  ⚠️ 데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
-</div>
+<div class="error-box" id="errorBox">⚠️ 데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</div>
+<div class="loading" id="loading"><div class="loading-spinner"></div>작업현황을 불러오는 중입니다...</div>
 
-<!-- 로딩 -->
-<div class="loading" id="loading">
-  <div class="loading-spinner"></div>
-  작업현황을 불러오는 중입니다...
-</div>
-
-<!-- 목록 -->
 <div class="list-wrap" id="listWrap" style="display:none;">
   <div class="list-title" id="listTitle">작업 목록</div>
   <div id="cardList"></div>
-  <div class="empty-box" id="emptyBox">
-    <div class="empty-icon">🔍</div>
-    해당 조건의 작업 내역이 없습니다.
-  </div>
+  <div class="empty-box" id="emptyBox"><div class="empty-icon">🔍</div>해당 조건의 작업 내역이 없습니다.</div>
 </div>
 
-<!-- 업데이트 시간 -->
 <div class="update-time" id="updateTime"></div>
 
-<!-- 카카오 배너 -->
 <div class="kakao-banner">
   <div class="kakao-banner-text">
     벌초·성묘 대행 서비스를 신청하시겠어요?<br>
     <strong>카카오톡으로 간편하게 상담</strong>받으실 수 있습니다!
   </div>
-  <a class="kakao-btn" href="https://pf.kakao.com/_xoxhUxbxj/chat" target="_blank">
+  <a class="kakao-btn" href="https://pf.kakao.com/_xoxhUxbxj/chat" target="_blank" rel="noopener">
     💬 &nbsp;카카오톡 상담하기
   </a>
 </div>
@@ -346,28 +137,6 @@ function loadData() {
   document.getElementById('listWrap').style.display = 'none';
   document.getElementById('errorBox').classList.remove('show');
 
-  var script = document.createElement('script');
-  window._apiCallback = function(res) {
-    document.getElementById('loading').style.display = 'none';
-    if (res && res.status === 'ok') {
-      allData = res.data;
-      buildRegionFilter(allData);
-      renderCards(allData);
-      updateStats(allData);
-      var now = new Date();
-      document.getElementById('updateTime').textContent =
-        '마지막 업데이트: ' + now.getFullYear() + '.' +
-        String(now.getMonth()+1).padStart(2,'0') + '.' +
-        String(now.getDate()).padStart(2,'0') + ' ' +
-        String(now.getHours()).padStart(2,'0') + ':' +
-        String(now.getMinutes()).padStart(2,'0');
-    } else {
-      document.getElementById('errorBox').classList.add('show');
-    }
-    document.body.removeChild(script);
-  };
-
-  // JSONP 방식
   fetch(API_URL)
     .then(function(r){ return r.json(); })
     .then(function(res){
@@ -396,15 +165,11 @@ function loadData() {
 
 function buildRegionFilter(data) {
   var regions = {};
-  data.forEach(function(d){
-    if(d.region) regions[d.region] = true;
-  });
+  data.forEach(function(d){ if(d.region) regions[d.region] = true; });
   var sel = document.getElementById('filterRegion');
   sel.innerHTML = '<option value="">📌 전체 지역</option>';
   Object.keys(regions).sort().forEach(function(r){
-    var o = document.createElement('option');
-    o.value = r; o.textContent = r;
-    sel.appendChild(o);
+    var o = document.createElement('option'); o.value = r; o.textContent = r; sel.appendChild(o);
   });
 }
 
@@ -412,8 +177,7 @@ function applyFilter() {
   var region = document.getElementById('filterRegion').value;
   var type = document.getElementById('filterType').value;
   var filtered = allData.filter(function(d){
-    return (!region || (d.region && d.region.indexOf(region) >= 0)) &&
-           (!type || d.type === type);
+    return (!region || (d.region && d.region.indexOf(region) >= 0)) && (!type || d.type === type);
   });
   renderCards(filtered);
 }
@@ -424,42 +188,29 @@ function renderCards(data) {
   var wrap = document.getElementById('listWrap');
   wrap.style.display = 'block';
   list.innerHTML = '';
-
-  document.getElementById('listTitle').textContent =
-    '작업 목록 (' + data.length + '건)';
-
-  if(data.length === 0){
-    empty.classList.add('show');
-    return;
-  }
+  document.getElementById('listTitle').textContent = '작업 목록 (' + data.length + '건)';
+  if(data.length === 0){ empty.classList.add('show'); return; }
   empty.classList.remove('show');
-
-  // 최신순 정렬
-  var sorted = data.slice().sort(function(a,b){
-    return String(b.date).localeCompare(String(a.date));
-  });
-
+  var sorted = data.slice().sort(function(a,b){ return String(b.date).localeCompare(String(a.date)); });
   sorted.forEach(function(d){
     var dateStr = d.date ? String(d.date).substring(0,10) : '';
     var isDone = d.photos && d.photos > 0;
     var card = document.createElement('div');
     card.className = 'work-card';
     card.innerHTML =
-      '<div class="card-header">' +
-        '<span class="card-id">' + (d.id||'') + '</span>' +
-        '<span class="card-badge ' + (isDone?'badge-done':'badge-ing') + '">' +
-          (isDone ? '✅ 완료' : '🔧 진행중') +
-        '</span>' +
-      '</div>' +
-      '<div class="card-region">📍 ' + (d.region||'지역 미입력') + '</div>' +
-      '<div class="card-detail">' + (d.detail||'') + '</div>' +
-      '<div class="card-info">' +
-        (d.type ? '<span class="info-chip">🏔️ ' + d.type + '</span>' : '') +
-        (d.work ? '<span class="info-chip">🌿 ' + d.work + '</span>' : '') +
-        (d.hours ? '<span class="info-chip">⏱️ ' + d.hours + '시간' + '</span>' : '') +
-        (d.photos ? '<span class="info-chip">📷 사진 ' + d.photos + '장' + '</span>' : '') +
-      '</div>' +
-      '<div class="card-date">📅 작업일: ' + dateStr + '</div>';
+      '<div class="card-header">'+
+        '<span class="card-id">'+(d.id||'')+'</span>'+
+        '<span class="card-badge '+(isDone?'badge-done':'badge-ing')+'">'+(isDone?'✅ 완료':'🔧 진행중')+'</span>'+
+      '</div>'+
+      '<div class="card-region">📍 '+(d.region||'지역 미입력')+'</div>'+
+      '<div class="card-detail">'+(d.detail||'')+'</div>'+
+      '<div class="card-info">'+
+        (d.type?'<span class="info-chip">🏔️ '+d.type+'</span>':'')+
+        (d.work?'<span class="info-chip">🌿 '+d.work+'</span>':'')+
+        (d.hours?'<span class="info-chip">⏱️ '+d.hours+'시간</span>':'')+
+        (d.photos?'<span class="info-chip">📷 사진 '+d.photos+'장</span>':'')+
+      '</div>'+
+      '<div class="card-date">📅 작업일: '+dateStr+'</div>';
     list.appendChild(card);
   });
 }
@@ -473,9 +224,7 @@ function updateStats(data) {
   document.getElementById('photoCount').textContent = photos;
 }
 
-// 페이지 로드 시 자동 실행
 window.onload = function(){ loadData(); };
-// 5분마다 자동 새로고침
 setInterval(loadData, 300000);
 </script>
 </body>
