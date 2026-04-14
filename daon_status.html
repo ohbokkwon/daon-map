@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>실시간 작업현황 - 다온벌초대행</title>
+<script>
+if(window.self!==window.top){
+  var _orig_push=history.pushState,_orig_replace=history.replaceState;
+  history.pushState=function(){};
+  history.replaceState=function(){};
+  window.addEventListener('beforeunload',function(e){e.stopPropagation();});
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
