@@ -3,232 +3,424 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>실시간 작업현황 - 다온벌초대행</title>
-<script>
-(function(){
-  if(window.self !== window.top){
-    try {
-      Object.defineProperty(window.history,'pushState',{value:function(){},writable:false,configurable:false});
-      Object.defineProperty(window.history,'replaceState',{value:function(){},writable:false,configurable:false});
-    } catch(e) {
-      window.history.pushState=function(){};
-      window.history.replaceState=function(){};
-    }
-    window.addEventListener('beforeunload',function(e){e.stopImmediatePropagation();},true);
-    window.addEventListener('hashchange',function(e){e.stopImmediatePropagation();},true);
-    window.addEventListener('popstate',function(e){e.stopImmediatePropagation();},true);
-    var _setInterval=window.setInterval;
-    window.setInterval=function(fn,delay){ if(delay<60000) return; return _setInterval(fn,delay); };
-  }
-})();
-</script>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<title>다온 실시간 작업현황</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Noto Sans KR', sans-serif; background: #f0f6ff; }
-.header { background: linear-gradient(135deg, #1a6fd4 0%, #2e8bff 100%); padding: 28px 24px 24px; text-align: center; }
-.header-icon { font-size: 40px; margin-bottom: 8px; }
-.header-title { font-size: 24px; font-weight: 900; color: #fff; }
-.header-title span { color: #ffe066; }
-.header-sub { font-size: 14px; color: rgba(255,255,255,0.85); margin-top: 6px; }
-.stats-wrap { display: flex; gap: 10px; padding: 16px; background: #daeaff; flex-wrap: wrap; }
-.stat-card { flex: 1; min-width: 100px; background: #fff; border-radius: 12px; padding: 14px 10px; text-align: center; box-shadow: 0 2px 8px rgba(46,139,255,0.1); border-top: 4px solid #2e8bff; }
-.stat-num { font-size: 28px; font-weight: 900; color: #1a6fd4; }
-.stat-label { font-size: 12px; color: #888; margin-top: 4px; font-weight: 500; }
-.filter-wrap { background: #e3f0ff; padding: 14px 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border-bottom: 2px solid #b8d8ff; }
-.filter-wrap select { padding: 10px 14px; border: 2px solid #b8d8ff; border-radius: 8px; font-size: 15px; background: #fff; color: #222; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; flex: 1; min-width: 130px; outline: none; }
-.filter-wrap select:focus { border-color: #2e8bff; }
-.btn-refresh { padding: 10px 18px; background: linear-gradient(135deg, #1a6fd4, #2e8bff); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; }
-.btn-refresh:hover { opacity: 0.9; }
-.loading { text-align: center; padding: 50px 20px; color: #1a6fd4; font-size: 16px; font-weight: 600; }
-.loading-spinner { width: 40px; height: 40px; border: 4px solid #c5dcff; border-top-color: #2e8bff; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.error-box { background: #fff0f0; border-left: 5px solid #e74c3c; padding: 16px 20px; margin: 16px; border-radius: 8px; font-size: 14px; color: #c0392b; display: none; }
-.error-box.show { display: block; }
-.list-wrap { padding: 14px 14px 20px; }
-.list-title { font-size: 16px; font-weight: 700; color: #1a4fa0; margin-bottom: 12px; padding: 10px 14px; background: #daeaff; border-radius: 8px; border-left: 5px solid #2e8bff; }
-.work-card { background: #fff; border: 2px solid #d0e8ff; border-radius: 14px; padding: 18px 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(46,139,255,0.08); }
-.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
-.card-id { font-size: 12px; color: #888; font-weight: 500; }
-.card-badge { padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; }
-.badge-done { background: #e8fff5; color: #16a34a; border: 2px solid #16c784; }
-.badge-ing { background: #fff7e6; color: #d97706; border: 2px solid #f59e0b; }
-.card-region { font-size: 19px; font-weight: 900; color: #1a1a1a; margin-bottom: 8px; line-height: 1.3; }
-.card-detail { font-size: 14px; color: #5588aa; margin-bottom: 12px; }
-.card-info { display: flex; flex-wrap: wrap; gap: 8px; }
-.info-chip { display: inline-flex; align-items: center; gap: 5px; background: #f0f6ff; border: 1px solid #c5dcff; border-radius: 8px; padding: 6px 12px; font-size: 13px; color: #1a4fa0; font-weight: 600; }
-.card-date { font-size: 13px; color: #aaa; margin-top: 10px; text-align: right; }
-.empty-box { text-align: center; padding: 50px 20px; color: #aaa; font-size: 16px; display: none; }
-.empty-box.show { display: block; }
-.empty-icon { font-size: 48px; margin-bottom: 12px; }
-.kakao-banner { background: linear-gradient(135deg, #1a6fd4, #2e8bff); padding: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
-.kakao-banner-text { color: #fff; font-size: 15px; line-height: 1.7; }
-.kakao-banner-text strong { color: #ffe066; font-size: 16px; }
-.kakao-btn { display: inline-flex; align-items: center; gap: 8px; background: #FEE500; color: #3C1E1E; font-size: 16px; font-weight: 700; padding: 12px 22px; border-radius: 10px; text-decoration: none; white-space: nowrap; font-family: 'Noto Sans KR', sans-serif; }
-.kakao-btn:hover { opacity: 0.88; }
-.update-time { text-align: center; font-size: 12px; color: #aaa; padding: 8px; background: #f8fbff; }
-@media (max-width: 600px) {
-  .stat-num { font-size: 22px; }
-  .card-region { font-size: 17px; }
-  .kakao-banner { flex-direction: column; text-align: center; }
-  .kakao-btn { width: 100%; justify-content: center; }
-}
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif; background:#f0f4f8; color:#2d3748; }
+
+  .header {
+    background:linear-gradient(135deg,#1a56a0 0%,#2b7de9 100%);
+    color:#fff; padding:20px 16px 16px; text-align:center;
+  }
+  .header h1 { font-size:20px; font-weight:700; letter-spacing:-0.5px; }
+  .header p { font-size:12px; opacity:0.85; margin-top:4px; }
+
+  .stats {
+    display:grid; grid-template-columns:repeat(4,1fr);
+    background:#fff; border-bottom:1px solid #e2e8f0;
+  }
+  .stat { padding:14px 8px; text-align:center; border-right:1px solid #e2e8f0; }
+  .stat:last-child { border-right:none; }
+  .stat-num { font-size:24px; font-weight:800; color:#1a56a0; line-height:1; }
+  .stat-label { font-size:11px; color:#718096; margin-top:4px; }
+
+  .filter-bar {
+    padding:12px; background:#fff; border-bottom:1px solid #e2e8f0;
+    display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+  }
+  .filter-bar select {
+    flex:1; min-width:120px; padding:8px 10px; border:1px solid #cbd5e0;
+    border-radius:8px; font-size:13px; background:#fff; color:#2d3748;
+  }
+  .btn-refresh {
+    padding:8px 14px; background:#1a56a0; color:#fff; border:none;
+    border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
+    white-space:nowrap;
+  }
+
+  .list-header {
+    padding:10px 14px; font-size:13px; font-weight:700; color:#4a5568;
+    background:#edf2f7; border-bottom:1px solid #e2e8f0;
+  }
+
+  .card {
+    background:#fff; margin:8px; border-radius:12px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.08); overflow:hidden;
+    border:1px solid #e2e8f0; cursor:pointer;
+    transition:box-shadow 0.2s;
+  }
+  .card:active { box-shadow:0 4px 16px rgba(26,86,160,0.15); }
+
+  /* 사진 썸네일 영역 */
+  .card-photos {
+    display:grid; grid-template-columns:1fr 1fr; height:160px; gap:2px;
+  }
+  .card-photos.no-photo {
+    height:80px; background:#f7fafc;
+    display:flex; align-items:center; justify-content:center;
+    color:#a0aec0; font-size:13px; grid-template-columns:1fr;
+  }
+  .photo-thumb {
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
+  .photo-label {
+    position:relative;
+  }
+  .photo-label::after {
+    content:attr(data-label);
+    position:absolute; bottom:6px; left:6px;
+    background:rgba(0,0,0,0.55); color:#fff;
+    font-size:10px; padding:2px 6px; border-radius:4px;
+  }
+
+  .card-body { padding:12px 14px; }
+  .card-id { font-size:10px; color:#a0aec0; margin-bottom:4px; }
+  .card-region { font-size:16px; font-weight:700; color:#1a202c; margin-bottom:2px; }
+  .card-sub { font-size:12px; color:#718096; margin-bottom:8px; }
+  .tags { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px; }
+  .tag {
+    padding:3px 8px; border-radius:20px; font-size:11px; font-weight:600;
+  }
+  .tag-green  { background:#c6f6d5; color:#276749; }
+  .tag-blue   { background:#bee3f8; color:#2a69ac; }
+  .tag-purple { background:#e9d8fd; color:#6b46c1; }
+  .tag-gray   { background:#edf2f7; color:#4a5568; }
+  .tag-orange { background:#feebc8; color:#c05621; }
+
+  .card-meta { font-size:11px; color:#a0aec0; text-align:right; }
+
+  .status-badge {
+    display:inline-block; padding:3px 10px; border-radius:20px;
+    font-size:11px; font-weight:700; float:right;
+  }
+  .badge-done    { background:#c6f6d5; color:#276749; border:1px solid #9ae6b4; }
+  .badge-ongoing { background:#fef3c7; color:#d97706; border:1px solid #fcd34d; }
+
+  /* 모달 */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6);
+    z-index:1000; overflow-y:auto; padding:16px;
+  }
+  .modal-overlay.active { display:block; }
+  .modal {
+    background:#fff; border-radius:16px; max-width:480px;
+    margin:0 auto; overflow:hidden;
+  }
+
+  .modal-photos { position:relative; }
+  .modal-tab-bar {
+    display:flex; background:#1a56a0;
+  }
+  .modal-tab {
+    flex:1; padding:10px; text-align:center; font-size:12px; font-weight:600;
+    color:rgba(255,255,255,0.65); cursor:pointer; border:none; background:none;
+  }
+  .modal-tab.active { color:#fff; border-bottom:2px solid #fff; }
+  .modal-photo-wrap { display:none; }
+  .modal-photo-wrap.active { display:block; }
+  .modal-photo-wrap img {
+    width:100%; display:block;
+    max-height:300px; object-fit:cover;
+  }
+  .photo-nav {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:6px 12px; background:#f7fafc; font-size:12px; color:#4a5568;
+  }
+  .photo-nav button {
+    padding:4px 12px; border:1px solid #cbd5e0; border-radius:6px;
+    background:#fff; font-size:12px; cursor:pointer;
+  }
+  .no-photo-msg {
+    height:120px; display:flex; align-items:center; justify-content:center;
+    color:#a0aec0; font-size:13px;
+  }
+
+  .modal-body { padding:16px; }
+  .modal-close {
+    position:absolute; top:10px; right:12px; background:rgba(0,0,0,0.4);
+    color:#fff; border:none; border-radius:50%; width:28px; height:28px;
+    font-size:16px; cursor:pointer; line-height:28px; text-align:center;
+    z-index:10;
+  }
+  .modal-title { font-size:17px; font-weight:800; margin-bottom:4px; }
+  .modal-region { font-size:13px; color:#718096; margin-bottom:12px; }
+  .info-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;
+  }
+  .info-item { background:#f7fafc; border-radius:8px; padding:8px 10px; }
+  .info-item-label { font-size:10px; color:#718096; margin-bottom:2px; }
+  .info-item-val { font-size:13px; font-weight:600; color:#2d3748; }
+
+  .loading { text-align:center; padding:40px; color:#a0aec0; font-size:14px; }
+  .empty { text-align:center; padding:60px 20px; color:#a0aec0; }
+  .empty-icon { font-size:48px; margin-bottom:12px; }
+
+  .photo-count-badge {
+    display:inline-block; background:#1a56a0; color:#fff;
+    font-size:10px; padding:1px 6px; border-radius:10px; margin-left:4px;
+    vertical-align:middle;
+  }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="header-icon">📋</div>
-  <div class="header-title">실시간 <span>작업현황</span></div>
-  <div class="header-sub">다온벌초대행 · 전국 현장 작업 현황을 실시간으로 확인하세요</div>
+  <h1>📋 다온벌초대행</h1>
+  <p>전국 현장 작업 현황을 실시간으로 확인하세요</p>
 </div>
 
-<div class="stats-wrap">
-  <div class="stat-card"><div class="stat-num" id="totalCount">-</div><div class="stat-label">전체 작업</div></div>
-  <div class="stat-card"><div class="stat-num" id="doneCount">-</div><div class="stat-label">완료</div></div>
-  <div class="stat-card"><div class="stat-num" id="ingCount">-</div><div class="stat-label">진행중</div></div>
-  <div class="stat-card"><div class="stat-num" id="photoCount">-</div><div class="stat-label">사진 등록</div></div>
+<div class="stats">
+  <div class="stat"><div class="stat-num" id="statTotal">-</div><div class="stat-label">전체 작업</div></div>
+  <div class="stat"><div class="stat-num" id="statDone">-</div><div class="stat-label">완료</div></div>
+  <div class="stat"><div class="stat-num" id="statOngoing">-</div><div class="stat-label">진행중</div></div>
+  <div class="stat"><div class="stat-num" id="statPhotos">-</div><div class="stat-label">사진 등록</div></div>
 </div>
 
-<div class="filter-wrap">
-  <select id="filterRegion" onchange="applyFilter()"><option value="">📌 전체 지역</option></select>
-  <select id="filterType" onchange="applyFilter()">
-    <option value="">🏔️ 전체 묘지유형</option>
-    <option>야산</option><option>공원묘지</option><option>납골당 주변</option><option>선산</option><option>기타</option>
+<div class="filter-bar">
+  <select id="selRegion" onchange="applyFilter()">
+    <option value="">📍 전체 지역</option>
   </select>
-  <button class="btn-refresh" onclick="loadData()">🔄 새로고침</button>
+  <select id="selType" onchange="applyFilter()">
+    <option value="">🪦 전체 묘지유형</option>
+    <option value="야산">야산</option>
+    <option value="선산">선산</option>
+    <option value="납골당">납골당</option>
+    <option value="기타">기타</option>
+  </select>
+  <button class="btn-refresh" onclick="loadJobs()">🔄 새로고침</button>
 </div>
 
-<div class="error-box" id="errorBox">⚠️ 데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</div>
-<div class="loading" id="loading"><div class="loading-spinner"></div><br>작업현황을 불러오는 중입니다...</div>
+<div class="list-header" id="listHeader">작업 목록 로딩 중...</div>
+<div id="jobList"><div class="loading">⏳ 데이터를 불러오는 중...</div></div>
 
-<div class="list-wrap" id="listWrap" style="display:none;">
-  <div class="list-title" id="listTitle">작업 목록</div>
-  <div id="cardList"></div>
-  <div class="empty-box" id="emptyBox"><div class="empty-icon">🔍</div>해당 조건의 작업 내역이 없습니다.</div>
-</div>
-
-<div class="update-time" id="updateTime"></div>
-
-<div class="kakao-banner">
-  <div class="kakao-banner-text">
-    벌초·성묘 대행 서비스를 신청하시겠어요?<br>
-    <strong>카카오톡으로 간편하게 상담</strong>받으실 수 있습니다!
+<!-- 모달 -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalBox">
+    <div class="modal-photos" id="modalPhotos">
+      <button class="modal-close" onclick="document.getElementById('modalOverlay').classList.remove('active')">✕</button>
+      <div class="modal-tab-bar" id="modalTabBar"></div>
+      <div id="modalPhotoContent"></div>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
   </div>
-  <a class="kakao-btn" href="https://pf.kakao.com/_xoxhUxbxj/chat" target="_blank" rel="noopener">💬 &nbsp;카카오톡 상담하기</a>
 </div>
 
 <script>
-var API_URL = 'https://script.google.com/macros/s/AKfycbwrutskYT72sfk8EsORH6d3qP9YciKmvdyJiR6Sx_IuBa87_HUEcSCfxIbPVSinHW_lyw/exec';
-var allData = [];
-var isLoading = false;
+const API = 'https://daongroup.co.kr/wp-json/daon/v1/jobs?per_page=50';
+let allJobs = [];
+let photoIndexes = {}; // 모달 탭별 현재 인덱스
 
-function loadData() {
-  if(isLoading) return;
-  isLoading = true;
-  document.getElementById('loading').style.display = 'block';
-  document.getElementById('listWrap').style.display = 'none';
-  document.getElementById('errorBox').classList.remove('show');
-  fetch(API_URL, { method:'GET', redirect:'follow', mode:'cors', credentials:'omit' })
-  .then(function(r){ return r.json(); })
-  .then(function(res){
-    isLoading = false;
-    document.getElementById('loading').style.display = 'none';
-    if(res && res.status === 'ok'){
-      allData = res.data || [];
-      buildRegionFilter(allData);
-      renderCards(allData);
-      updateStats(allData);
-      var now = new Date();
-      document.getElementById('updateTime').textContent =
-        '마지막 업데이트: ' + now.getFullYear() + '.' +
-        String(now.getMonth()+1).padStart(2,'0') + '.' +
-        String(now.getDate()).padStart(2,'0') + ' ' +
-        String(now.getHours()).padStart(2,'0') + ':' +
-        String(now.getMinutes()).padStart(2,'0');
-    } else {
-      document.getElementById('errorBox').classList.add('show');
-    }
-  })
-  .catch(function(){
-    isLoading = false;
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('errorBox').classList.add('show');
-  });
+async function loadJobs() {
+  document.getElementById('jobList').innerHTML = '<div class="loading">⏳ 데이터를 불러오는 중...</div>';
+  try {
+    const res = await fetch(API + '&_=' + Date.now());
+    const data = await res.json();
+    allJobs = data.posts || [];
+    buildRegionFilter();
+    applyFilter();
+  } catch(e) {
+    document.getElementById('jobList').innerHTML = '<div class="loading">❌ 데이터를 불러오지 못했습니다.</div>';
+  }
 }
 
-function buildRegionFilter(data) {
-  var regions = {};
-  data.forEach(function(d){ if(d.region) regions[d.region]=true; });
-  var sel = document.getElementById('filterRegion');
-  sel.innerHTML = '<option value="">📌 전체 지역</option>';
-  Object.keys(regions).sort().forEach(function(r){ var o=document.createElement('option'); o.value=r; o.textContent=r; sel.appendChild(o); });
+function buildRegionFilter() {
+  const sel = document.getElementById('selRegion');
+  const existing = [...sel.options].map(o => o.value);
+  // 시/도 단위 추출
+  const regions = [...new Set(allJobs.map(j => {
+    const parts = (j.region||'').split(' ');
+    return parts[0] || '';
+  }).filter(Boolean))];
+  regions.forEach(r => {
+    if (!existing.includes(r)) {
+      const o = document.createElement('option');
+      o.value = r; o.textContent = r;
+      sel.appendChild(o);
+    }
+  });
 }
 
 function applyFilter() {
-  var region = document.getElementById('filterRegion').value;
-  var type = document.getElementById('filterType').value;
-  renderCards(allData.filter(function(d){ return (!region||(d.region&&d.region.indexOf(region)>=0))&&(!type||d.type===type); }));
+  const region = document.getElementById('selRegion').value;
+  const type   = document.getElementById('selType').value;
+  let filtered = allJobs;
+  if (region) filtered = filtered.filter(j => (j.region||'').startsWith(region));
+  if (type)   filtered = filtered.filter(j => (j.grave_type||'') === type);
+  renderStats(filtered);
+  renderList(filtered);
 }
 
-function renderCards(data) {
-  var list = document.getElementById('cardList');
-  var empty = document.getElementById('emptyBox');
-  document.getElementById('listWrap').style.display = 'block';
-  list.innerHTML = '';
-  document.getElementById('listTitle').textContent = '작업 목록 ('+data.length+'건)';
-  if(!data.length){ empty.classList.add('show'); return; }
-  empty.classList.remove('show');
-  data.slice().sort(function(a,b){ return String(b.date).localeCompare(String(a.date)); }).forEach(function(d){
-    var dateStr = d.date ? String(d.date).substring(0,10) : '';
-    var isDone = d.photos && d.photos > 0;
-    var card = document.createElement('div');
-    card.className = 'work-card';
-    card.innerHTML =
-      '<div class="card-header"><span class="card-id">'+(d.id||'')+'</span><span class="card-badge '+(isDone?'badge-done':'badge-ing')+'">'+(isDone?'✅ 완료':'🔧 진행중')+'</span></div>'+
-      '<div class="card-region">📍 '+(d.region||'지역 미입력')+'</div>'+
-      '<div class="card-detail">'+(d.detail||'')+'</div>'+
-      '<div class="card-info">'+
-        (d.type?'<span class="info-chip">🏔️ '+d.type+'</span>':'')+
-        (d.work?'<span class="info-chip">🌿 '+d.work+'</span>':'')+
-        (d.hours?'<span class="info-chip">⏱️ '+d.hours+'시간</span>':'')+
-        (d.photos?'<span class="info-chip">📷 사진 '+d.photos+'장</span>':'')+
-      '</div>'+
-      '<div class="card-date">📅 작업일: '+dateStr+'</div>';
-    list.appendChild(card);
-  });
+function renderStats(jobs) {
+  document.getElementById('statTotal').textContent   = jobs.length;
+  document.getElementById('statDone').textContent    = jobs.filter(j => j.service && !j.service.includes('진행')).length;
+  document.getElementById('statOngoing').textContent = jobs.filter(j => (j.service||'').includes('진행')).length;
+  document.getElementById('statPhotos').textContent  = jobs.filter(j => j.rep_after_url || j.rep_before_url).reduce((acc, j) => {
+    return acc + (j.after_urls||[]).length + (j.before_urls||[]).length + (j.special_urls||[]).length;
+  }, 0);
 }
 
-function updateStats(data) {
-  var done = data.filter(function(d){ return d.photos&&d.photos>0; }).length;
-  var photos = data.reduce(function(sum,d){ return sum+(parseInt(d.photos)||0); },0);
-  document.getElementById('totalCount').textContent = data.length;
-  document.getElementById('doneCount').textContent = done;
-  document.getElementById('ingCount').textContent = data.length-done;
-  document.getElementById('photoCount').textContent = photos;
+function serviceTag(s) {
+  if (!s) return '';
+  if (s.includes('벌초')) return `<span class="tag tag-green">🌿 ${s}</span>`;
+  if (s.includes('이장')) return `<span class="tag tag-purple">⚰️ ${s}</span>`;
+  if (s.includes('제초')) return `<span class="tag tag-blue">✂️ ${s}</span>`;
+  if (s.includes('정기')) return `<span class="tag tag-orange">📅 ${s}</span>`;
+  return `<span class="tag tag-gray">${s}</span>`;
 }
 
-document.addEventListener('DOMContentLoaded', function(){ loadData(); });
-
-// 핵심: 부모 페이지 메뉴 클릭 감지 → 강제 새로고침
-(function(){
-  if(window.self !== window.top){
-    try {
-      var parentDoc = window.parent.document;
-      parentDoc.addEventListener('click', function(e){
-        var target = e.target.closest('a, button');
-        if(target){
-          var href = target.getAttribute('href');
-          if(href && href !== '#' && !href.startsWith('http')){
-            setTimeout(function(){
-              window.parent.location.reload();
-            }, 50);
-          }
-        }
-      }, true);
-    } catch(e){}
+function renderList(jobs) {
+  document.getElementById('listHeader').textContent = `작업 목록 (${jobs.length}건)`;
+  if (!jobs.length) {
+    document.getElementById('jobList').innerHTML = `
+      <div class="empty"><div class="empty-icon">📭</div><p>해당하는 작업이 없습니다</p></div>`;
+    return;
   }
-})();
+
+  const html = jobs.map((j, idx) => {
+    const hasAfter  = j.rep_after_url  || (j.after_urls  && j.after_urls.length);
+    const hasBefore = j.rep_before_url || (j.before_urls && j.before_urls.length);
+    const afterSrc  = j.rep_after_url  || (j.after_urls  && j.after_urls[0]) || '';
+    const beforeSrc = j.rep_before_url || (j.before_urls && j.before_urls[0]) || '';
+
+    let photosHtml = '';
+    if (afterSrc || beforeSrc) {
+      photosHtml = `<div class="card-photos">`;
+      if (beforeSrc) photosHtml += `
+        <div class="photo-label" data-label="작업 전">
+          <img class="photo-thumb" src="${beforeSrc}" alt="작업 전" loading="lazy"
+               onerror="this.parentElement.style.display='none'">
+        </div>`;
+      if (afterSrc) photosHtml += `
+        <div class="photo-label" data-label="작업 후">
+          <img class="photo-thumb" src="${afterSrc}" alt="작업 후" loading="lazy"
+               onerror="this.parentElement.style.display='none'">
+        </div>`;
+      photosHtml += `</div>`;
+    } else {
+      photosHtml = `<div class="card-photos no-photo">📷 사진 없음</div>`;
+    }
+
+    const totalPhotos = (j.after_urls||[]).length + (j.before_urls||[]).length + (j.special_urls||[]).length;
+    const photoBadge  = totalPhotos > 0 ? `<span class="photo-count-badge">사진 ${totalPhotos}장</span>` : '';
+
+    const dateStr = j.work_date || j.date.slice(0,10);
+
+    return `
+    <div class="card" onclick="openModal(${idx})">
+      ${photosHtml}
+      <div class="card-body">
+        <div class="card-id">DA-${dateStr.replace(/-/g,'')}-${String(idx+1).padStart(3,'0')}
+          <span class="status-badge badge-done">✅ 완료</span>
+        </div>
+        <div class="card-region">📍 ${j.region||'지역 미상'}</div>
+        ${j.count ? `<div class="card-sub">${j.count}</div>` : ''}
+        <div class="tags">
+          ${serviceTag(j.service)}
+          ${j.grave_type ? `<span class="tag tag-blue">${j.grave_type}</span>` : ''}
+          ${j.difficulty ? `<span class="tag tag-gray">${j.difficulty}</span>` : ''}
+          ${j.duration   ? `<span class="tag tag-gray">⏱ ${j.duration}</span>` : ''}
+          ${photoBadge ? `<span class="tag tag-blue">📷 ${totalPhotos}장</span>` : ''}
+        </div>
+        <div class="card-meta">📅 작업일: ${dateStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('jobList').innerHTML = html;
+}
+
+/* ── 모달 ── */
+function openModal(idx) {
+  const j = allJobs[idx];
+  photoIndexes = { after:0, before:0, special:0 };
+
+  const afterUrls   = j.after_urls   || (j.rep_after_url  ? [j.rep_after_url]  : []);
+  const beforeUrls  = j.before_urls  || (j.rep_before_url ? [j.rep_before_url] : []);
+  const specialUrls = j.special_urls || [];
+
+  // 탭 구성
+  const tabs = [];
+  if (afterUrls.length)   tabs.push({ key:'after',   label:`작업 후 (${afterUrls.length}장)`,   urls: afterUrls });
+  if (beforeUrls.length)  tabs.push({ key:'before',  label:`작업 전 (${beforeUrls.length}장)`,  urls: beforeUrls });
+  if (specialUrls.length) tabs.push({ key:'special', label:`특이사항 (${specialUrls.length}장)`, urls: specialUrls });
+
+  // 탭 바
+  const tabBarHtml = tabs.length ? tabs.map((t, i) =>
+    `<button class="modal-tab ${i===0?'active':''}" onclick="switchTab('${t.key}',this)">${t.label}</button>`
+  ).join('') : '';
+  document.getElementById('modalTabBar').innerHTML = tabBarHtml;
+
+  // 사진 콘텐츠
+  let photoContentHtml = '';
+  if (tabs.length === 0) {
+    photoContentHtml = `<div class="no-photo-msg">📷 등록된 사진이 없습니다</div>`;
+  } else {
+    tabs.forEach((t, i) => {
+      photoContentHtml += `
+      <div class="modal-photo-wrap ${i===0?'active':''}" id="wrap_${t.key}">
+        <img src="${t.urls[0]}" id="img_${t.key}" alt="${t.label}"
+             onerror="this.src='';this.alt='이미지를 불러올 수 없습니다'">
+        ${t.urls.length > 1 ? `
+        <div class="photo-nav">
+          <button onclick="navPhoto('${t.key}',-1,${t.urls.length})">◀ 이전</button>
+          <span id="nav_${t.key}">1 / ${t.urls.length}</span>
+          <button onclick="navPhoto('${t.key}',1,${t.urls.length})">다음 ▶</button>
+        </div>` : ''}
+      </div>`;
+    });
+    // urls 데이터를 전역에 저장
+    window._modalTabs = {};
+    tabs.forEach(t => window._modalTabs[t.key] = t.urls);
+  }
+  document.getElementById('modalPhotoContent').innerHTML = photoContentHtml;
+
+  // 상세 정보
+  const dateStr = j.work_date || j.date.slice(0,10);
+  document.getElementById('modalBody').innerHTML = `
+    <div class="modal-title">${j.region||'지역 미상'}</div>
+    <div class="modal-region">${j.title||''}</div>
+    <div class="tags" style="margin-bottom:12px">
+      ${serviceTag(j.service)}
+      ${j.grave_type ? `<span class="tag tag-blue">${j.grave_type}</span>` : ''}
+    </div>
+    <div class="info-grid">
+      ${j.count      ? `<div class="info-item"><div class="info-item-label">기수</div><div class="info-item-val">${j.count}</div></div>` : ''}
+      ${j.duration   ? `<div class="info-item"><div class="info-item-label">소요시간</div><div class="info-item-val">${j.duration}</div></div>` : ''}
+      ${j.difficulty ? `<div class="info-item"><div class="info-item-label">난이도</div><div class="info-item-val">${j.difficulty}</div></div>` : ''}
+      ${j.next_visit ? `<div class="info-item"><div class="info-item-label">다음 방문</div><div class="info-item-val">${j.next_visit}</div></div>` : ''}
+      ${j.worker     ? `<div class="info-item"><div class="info-item-label">작업자</div><div class="info-item-val">${j.worker}</div></div>` : ''}
+      <div class="info-item"><div class="info-item-label">작업일</div><div class="info-item-val">${dateStr}</div></div>
+    </div>
+    ${j.work_items ? `<div class="info-item" style="margin-bottom:8px"><div class="info-item-label">작업 항목</div><div class="info-item-val" style="font-size:12px">${j.work_items}</div></div>` : ''}
+  `;
+
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function switchTab(key, btn) {
+  // 탭 활성화
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  // 사진 wrap 전환
+  document.querySelectorAll('.modal-photo-wrap').forEach(w => w.classList.remove('active'));
+  document.getElementById('wrap_' + key).classList.add('active');
+}
+
+function navPhoto(key, dir, total) {
+  if (!window._modalTabs || !window._modalTabs[key]) return;
+  photoIndexes[key] = (photoIndexes[key] + dir + total) % total;
+  const idx = photoIndexes[key];
+  document.getElementById('img_' + key).src = window._modalTabs[key][idx];
+  document.getElementById('nav_' + key).textContent = `${idx+1} / ${total}`;
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) {
+    document.getElementById('modalOverlay').classList.remove('active');
+  }
+}
+
+loadJobs();
 </script>
 </body>
 </html>
